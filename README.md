@@ -27,7 +27,8 @@ Most ports are only used internally and these are the exposed ones:
     | Port (variable name) | Security | Description|
     | :--- | :--- | :--- |
     | MQTT_BROKER_PORT_TLS | TLS | MQTT communication for all MCUs |
-    | API_GATEWAY_PORT | TLS | API gateway service access |
+    | API_GATEWAY_PORT | TLS | API gateway access for the internal services |
+    | API_GATEWAY_PORT_TLS | TLS | API gateway access for external users |
     | PORTAL_PORT | In progress | Portal access |
 
 3. Select and run a deployment script from the Deployment scripts section.
