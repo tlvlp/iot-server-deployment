@@ -1,0 +1,7 @@
+
+/.idea/
+/db_root_pass
+/mongo-init.js
+/docker-compose-db-init.yml
+/docker-compose.yml
+/passwords-DELETE_AFTER_SAVING

@@ -1,0 +1,389 @@
+version: "3.7"
+
+services:
+
+  ${DB_SERVICE_NAME}:
+    image: ${DB_IMAGE}
+    networks:
+      - backend-net
+#    ports:
+#      - ${DB_PORT_EXTERNAL}:${DB_PORT_INTERNAL}
+    volumes:
+      - ${DB_DATA_VOLUME_NAME}:/data/db:rw
+      - ${DB_CONFIG_VOLUME_NAME}:/data/configdb:rw
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    deploy:
+      replicas: ${DB_NUMBER_OF_REPLICAS}
+      restart_policy:
+        condition: any
+
+  ${MQTT_BROKER_SERVICE_NAME}:
+    image: ${MQTT_BROKER_IMAGE}
+    networks:
+      mqtt-net:
+        aliases:
+          - ${MQTT_BROKER_SERVICE_NAME}
+    ports:
+      - ${MQTT_BROKER_PORT_TLS}:${MQTT_BROKER_PORT_TLS}
+    volumes:
+      - ${MQTT_BROKER_VOLUME_NAME}:/mosquitto:rw
+      - ${TLS_LETSENCRYPT_PARENT_LOCATION}:/tls:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    deploy:
+      replicas: ${MQTT_BROKER_NUMBER_OF_REPLICAS}
+      restart_policy:
+        condition: any
+
+  ${MQTT_CLIENT_SERVICE_NAME}:
+    image: ${MQTT_CLIENT_IMAGE}
+    depends_on:
+      - ${DB_SERVICE_NAME}
+      - ${API_GATEWAY_NAME}
+    networks:
+      - backend-net
+      - mqtt-net
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+#    ports:
+#      - ${MQTT_CLIENT_SERVICE_PORT}:${MQTT_CLIENT_SERVICE_PORT}
+    secrets:
+      - ${MQTT_CLIENT_DB_PASS_SECRET_FILE}
+      - ${MQTT_CLIENT_MQTT_BROKER_PASS_SECRET_FILE}
+      - ${API_GATEWAY_SECURITY_PASS_BACKEND_SECRET_FILE}
+    deploy:
+      replicas: ${MQTT_CLIENT_NUMBER_OF_REPLICAS}
+      restart_policy:
+        condition: any
+    environment:
+      - SPRING_ACTIVE_PROFILE
+      - SPRING_LOG_PATTERN
+      - SPRING_LOG_LEVEL
+      - DOCKER_SECRETS_FOLDER
+      - MQTT_CLIENT_SERVICE_PORT
+      - MQTT_CLIENT_SERVICE_NAME
+      - MQTT_CLIENT_DEFAULT_QOS
+      # Broker
+      - MQTT_CLIENT_BROKER_URI
+      - MQTT_CLIENT_MQTT_BROKER_USER
+      - MQTT_CLIENT_MQTT_BROKER_PASS_SECRET_FILE
+      - MQTT_CLIENT_TOPIC_SUBSCRIPTIONS_CSV
+      # DB
+      - DB_SERVICE_NAME
+      - DB_PORT_INTERNAL
+      - DB_USER_DB
+      - MQTT_CLIENT_DB_USER
+      - MQTT_CLIENT_DB_PASS_SECRET_FILE
+      - MQTT_CLIENT_DB
+      # API
+      - MQTT_CLIENT_API_OUTGOING_MESSAGE
+      - API_GATEWAY_NAME
+      - API_GATEWAY_PORT
+      - API_GATEWAY_API_INCOMING_MQTT_MESSAGE
+      - API_GATEWAY_SECURITY_USER_BACKEND
+      - API_GATEWAY_SECURITY_PASS_BACKEND_SECRET_FILE
+
+  ${UNIT_SERVICE_NAME}:
+    image: ${UNIT_SERVICE_IMAGE}
+    depends_on:
+      - ${DB_SERVICE_NAME}
+      - ${API_GATEWAY_NAME}
+    networks:
+      - backend-net
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+#    ports:
+#      - ${UNIT_SERVICE_PORT}:${UNIT_SERVICE_PORT}
+    secrets:
+      - ${UNIT_SERVICE_DB_PASS_SECRET_FILE}
+    deploy:
+      replicas: ${UNIT_SERVICE_NUMBER_OF_REPLICAS}
+      restart_policy:
+        condition: any
+    environment:
+      - SPRING_ACTIVE_PROFILE
+      - SPRING_LOG_PATTERN
+      - SPRING_LOG_LEVEL
+      - DOCKER_SECRETS_FOLDER
+      - UNIT_SERVICE_PORT
+      - UNIT_SERVICE_NAME
+      # DB
+      - DB_SERVICE_NAME
+      - DB_PORT_INTERNAL
+      - DB_USER_DB
+      - UNIT_SERVICE_DB_USER
+      - UNIT_SERVICE_DB_PASS_SECRET_FILE
+      - UNIT_SERVICE_DB
+      # MQTT TOPICS
+      - MCU_MQTT_TOPIC_GLOBAL_STATUS
+      - MCU_MQTT_TOPIC_GLOBAL_STATUS_REQUEST
+      - MCU_MQTT_TOPIC_GLOBAL_INACTIVE
+      - MCU_MQTT_TOPIC_GLOBAL_ERROR
+      # API
+      - UNIT_SERVICE_API_INCOMING_MESSAGE
+      - UNIT_SERVICE_API_LIST_ALL_UNIT
+      - UNIT_SERVICE_API_GET_UNIT_BY_ID
+      - UNIT_SERVICE_API_REQUEST_GLOBAL_STATUS
+      - UNIT_SERVICE_API_MODULE_CONTROL
+      - UNIT_SERVICE_API_ADD_SCHEDULED_EVENT
+      - UNIT_SERVICE_API_DELETE_SCHEDULED_EVENT
+      - UNIT_SERVICE_API_GET_UNIT_LOGS
+
+  ${SCHEDULER_SERVICE_NAME}:
+    image: ${SCHEDULER_SERVICE_IMAGE}
+    depends_on:
+      - ${DB_SERVICE_NAME}
+      - ${API_GATEWAY_NAME}
+    networks:
+      - backend-net
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+#    ports:
+#      - ${SCHEDULER_SERVICE_PORT}:${SCHEDULER_SERVICE_PORT}
+    secrets:
+      - ${SCHEDULER_SERVICE_DB_PASS_SECRET_FILE}
+      - ${API_GATEWAY_SECURITY_PASS_BACKEND_SECRET_FILE}
+    deploy:
+      replicas: ${SCHEDULER_SERVICE_NUMBER_OF_REPLICAS}
+      restart_policy:
+        condition: any
+    environment:
+      - SPRING_ACTIVE_PROFILE
+      - SPRING_LOG_PATTERN
+      - SPRING_LOG_LEVEL
+      - DOCKER_SECRETS_FOLDER
+      - SCHEDULER_SERVICE_PORT
+      - SCHEDULER_SERVICE_NAME
+      # DB
+      - DB_SERVICE_NAME
+      - DB_PORT_INTERNAL
+      - DB_USER_DB
+      - SCHEDULER_SERVICE_DB_USER
+      - SCHEDULER_SERVICE_DB_PASS_SECRET_FILE
+      - SCHEDULER_SERVICE_DB
+      # API
+      - SCHEDULER_SERVICE_API_GET_EVENTS_FROM_LIST
+      - SCHEDULER_SERVICE_API_POST_MQTT_MESSAGE_SEND_EVENT
+      - SCHEDULER_SERVICE_API_DELETE_EVENT
+      - API_GATEWAY_SECURITY_USER_BACKEND
+      - API_GATEWAY_SECURITY_PASS_BACKEND_SECRET_FILE
+      - API_GATEWAY_NAME
+      - API_GATEWAY_PORT
+      - API_GATEWAY_API_OUTGOING_MQTT_MESSAGE
+
+  ${REPORTING_SERVICE_NAME}:
+    image: ${REPORTING_SERVICE_IMAGE}
+    depends_on:
+      - ${DB_SERVICE_NAME}
+      - ${API_GATEWAY_NAME}
+    networks:
+      - backend-net
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+#    ports:
+#      - ${REPORTING_SERVICE_PORT}:${REPORTING_SERVICE_PORT}
+    secrets:
+      - ${REPORTING_SERVICE_DB_PASS_SECRET_FILE}
+    deploy:
+      replicas: ${REPORTING_SERVICE_NUMBER_OF_REPLICAS}
+      restart_policy:
+        condition: any
+    environment:
+      - SPRING_ACTIVE_PROFILE
+      - SPRING_LOG_PATTERN
+      - SPRING_LOG_LEVEL
+      - DOCKER_SECRETS_FOLDER
+      - REPORTING_SERVICE_PORT
+      - REPORTING_SERVICE_NAME
+      # DB
+      - DB_SERVICE_NAME
+      - DB_PORT_INTERNAL
+      - DB_USER_DB
+      - REPORTING_SERVICE_DB_USER
+      - REPORTING_SERVICE_DB_PASS_SECRET_FILE
+      - REPORTING_SERVICE_DB
+      # API
+      - REPORTING_SERVICE_API_GET_AVERAGES
+      - REPORTING_SERVICE_API_POST_VALUES
+
+  ${API_GATEWAY_NAME}:
+    image: ${API_GATEWAY_IMAGE}
+    depends_on:
+      - ${DB_SERVICE_NAME}
+    networks:
+      - backend-net
+      - portal-net
+    volumes:
+      - ${TLS_LETSENCRYPT_PARENT_LOCATION}:/tls:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    ports:
+      - ${API_GATEWAY_PORT_TLS}:${API_GATEWAY_PORT_TLS}
+    secrets:
+      - ${API_GATEWAY_DB_PASS_SECRET_FILE}
+      - ${TLS_KEYSTORE_PASSWORD_SECRET_FILE}
+    deploy:
+      replicas: ${API_GATEWAY_NUMBER_OF_REPLICAS}
+      restart_policy:
+        condition: any
+    environment:
+      - SPRING_ACTIVE_PROFILE
+      - SPRING_LOG_PATTERN
+      - SPRING_LOG_LEVEL
+      - DOCKER_SECRETS_FOLDER
+      - API_GATEWAY_PORT_TLS
+      - API_GATEWAY_PORT
+      - API_GATEWAY_NAME
+      #TLS
+      - TLS_CERT_PATH_INSIDE_THE_CONTAINER
+      - TLS_KEYSTORE_PASSWORD_SECRET_FILE
+      - API_GATEWAY_TLS_ON
+      - API_GATEWAY_TLS_KEYSTORE_TYPE
+      - API_GATEWAY_TLS_KEY_ALIAS
+      # DB
+      - DB_SERVICE_NAME
+      - DB_PORT_INTERNAL
+      - DB_USER_DB
+      - API_GATEWAY_DB_USER
+      - API_GATEWAY_DB_PASS_SECRET_FILE
+      - API_GATEWAY_DB
+      # API GATEWAY
+      - API_GATEWAY_API_INCOMING_MQTT_MESSAGE
+      - API_GATEWAY_API_OUTGOING_MQTT_MESSAGE
+      - API_GATEWAY_API_GET_ALL_UNITS
+      - API_GATEWAY_API_GET_UNIT_BY_ID
+      - API_GATEWAY_API_GET_UNIT_BY_ID_WITH_SCHEDULES_AND_LOGS
+      - API_GATEWAY_API_REQUEST_GLOBAL_UNIT_STATUS
+      - API_GATEWAY_API_UNIT_MODULE_CONTROL
+      - API_GATEWAY_API_ADD_SCHEDULED_EVENT_TO_UNIT
+      - API_GATEWAY_API_DELETE_SCHEDULED_EVENT_FROM_UNIT
+      - API_GATEWAY_API_GET_REPORTS_FOR_UNIT_MODULE
+      - API_GATEWAY_API_AUTHENTICATE_USER
+      - API_GATEWAY_API_GET_ALL_USERS
+      - API_GATEWAY_API_SAVE_USER
+      - API_GATEWAY_API_DELETE_USER
+      - API_GATEWAY_API_GET_ROLES
+      # API
+      - MQTT_CLIENT_SERVICE_NAME
+      - MQTT_CLIENT_SERVICE_PORT
+      - MQTT_CLIENT_API_OUTGOING_MESSAGE
+      - UNIT_SERVICE_NAME
+      - UNIT_SERVICE_PORT
+      - UNIT_SERVICE_API_LIST_ALL_UNIT
+      - UNIT_SERVICE_API_GET_UNIT_BY_ID
+      - UNIT_SERVICE_API_REQUEST_GLOBAL_STATUS
+      - UNIT_SERVICE_API_MODULE_CONTROL
+      - UNIT_SERVICE_API_ADD_SCHEDULED_EVENT
+      - UNIT_SERVICE_API_DELETE_SCHEDULED_EVENT
+      - UNIT_SERVICE_API_INCOMING_MESSAGE
+      - UNIT_SERVICE_API_GET_UNIT_LOGS
+      - SCHEDULER_SERVICE_NAME
+      - SCHEDULER_SERVICE_PORT
+      - SCHEDULER_SERVICE_API_GET_EVENTS_FROM_LIST
+      - SCHEDULER_SERVICE_API_POST_MQTT_MESSAGE_SEND_EVENT
+      - SCHEDULER_SERVICE_API_DELETE_EVENT
+      - REPORTING_SERVICE_NAME
+      - REPORTING_SERVICE_PORT
+      - REPORTING_SERVICE_API_GET_AVERAGES
+      - REPORTING_SERVICE_API_POST_VALUES
+
+#  ${PORTAL_NAME}:
+#    image: ${PORTAL_IMAGE}
+#    depends_on:
+#      - ${API_GATEWAY_NAME}
+#    networks:
+#      - portal-net
+#    volumes:
+#      - /etc/localtime:/etc/localtime:ro
+#      - /etc/timezone:/etc/timezone:ro
+#    ports:
+#      - ${PORTAL_PORT}:${PORTAL_PORT}
+#    deploy:
+#      replicas: ${PORTAL_NUMBER_OF_REPLICAS}
+#      restart_policy:
+#        condition: any
+#    environment:
+#      - SPRING_ACTIVE_PROFILE
+#      - SPRING_LOG_PATTERN
+#      - SPRING_LOG_LEVEL
+#      - PORTAL_PORT
+#      - PORTAL_NAME
+#      # API Gateway
+#      - API_GATEWAY_NAME
+#      - API_GATEWAY_PORT_TLS
+#      - API_GATEWAY_API_GET_ALL_UNITS
+#      - API_GATEWAY_API_GET_UNIT_BY_ID_WITH_SCHEDULES_AND_LOGS
+#      - API_GATEWAY_API_REQUEST_GLOBAL_UNIT_STATUS
+#      - API_GATEWAY_API_UNIT_MODULE_CONTROL
+#      - API_GATEWAY_API_ADD_SCHEDULED_EVENT_TO_UNIT
+#      - API_GATEWAY_API_DELETE_SCHEDULED_EVENT_FROM_UNIT
+#      - API_GATEWAY_API_GET_REPORTS_FOR_UNIT_MODULE
+#      - API_GATEWAY_API_AUTHENTICATE_USER
+#      - API_GATEWAY_API_GET_ALL_USERS
+#      - API_GATEWAY_API_SAVE_USER
+#      - API_GATEWAY_API_DELETE_USER
+#      - API_GATEWAY_API_GET_ROLES
+
+
+volumes:
+
+  ${DB_DATA_VOLUME_NAME}:
+    external: true
+
+  ${DB_CONFIG_VOLUME_NAME}:
+    external: true
+
+  ${MQTT_BROKER_VOLUME_NAME}:
+    external: true
+
+networks:
+
+  mqtt-net:
+    driver: overlay
+    attachable: false
+    driver_opts:
+      encrypted: ""
+
+  backend-net:
+    driver: overlay
+    attachable: false
+    driver_opts:
+      encrypted: ""
+
+  portal-net:
+    driver: overlay
+    attachable: false
+    driver_opts:
+      encrypted: ""
+
+secrets:
+
+  ${MQTT_CLIENT_DB_PASS_SECRET_FILE}:
+    external: true
+
+  ${MQTT_CLIENT_MQTT_BROKER_PASS_SECRET_FILE}:
+    external: true
+
+  ${UNIT_SERVICE_DB_PASS_SECRET_FILE}:
+    external: true
+
+  ${SCHEDULER_SERVICE_DB_PASS_SECRET_FILE}:
+    external: true
+
+  ${REPORTING_SERVICE_DB_PASS_SECRET_FILE}:
+    external: true
+
+  ${API_GATEWAY_DB_PASS_SECRET_FILE}:
+    external: true
+
+  ${API_GATEWAY_SECURITY_PASS_BACKEND_SECRET_FILE}:
+    external: true
+
+  ${TLS_KEYSTORE_PASSWORD_SECRET_FILE}:
+    external: true
+
