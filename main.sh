@@ -27,12 +27,12 @@ _remove_bash_dependency() {
 
 ensure_run_dependencies() {
   _ensure_bash_dependency 'gettext-base'
-  _ensure_bash_dependency 'htpasswd'
+  _ensure_bash_dependency 'apache2-utils'
 }
 
 remove_run_dependencies() {
   _remove_bash_dependency 'gettext-base'
-  _remove_bash_dependency 'htpasswd'
+  _remove_bash_dependency 'apache2-utils'
 }
 
 ### DOCKER ###
