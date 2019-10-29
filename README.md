@@ -21,7 +21,7 @@ Part of the [tlvlp IoT project](https://github.com/tlvlp/iot-project-summary)'s 
     with the keystore password. Store the secret's name at the [config.sh](config.sh) under the 
     TLS_KEYSTORE_PASSWORD_SECRET_FILE variable.
     
-3. Optionally configure ports at the [config.sh](config.sh) to avoid collisions on your server. 
+2. Optionally configure ports at the [config.sh](config.sh) to avoid collisions on your server. 
 Most ports are only used internally and these are the exposed ones:
 
     | Port (variable name) | Security | Description|
@@ -31,7 +31,30 @@ Most ports are only used internally and these are the exposed ones:
     | API_GATEWAY_PORT_TLS | TLS | API gateway access for external users |
     | PORTAL_PORT | In progress | Portal access |
 
+
 3. Select and run a deployment script from the Deployment scripts section.
+
+
+## Service scalability
+Most of the services are scalable and the load balancing is handled by Docker.
+Scaling can be done by either of the below option:
+ - Modifying the [config.sh](config.sh) where you can find a <service_name>NUMBER_OF_REPLICAS variable for each service and redeploying the Swarm stack.
+ - Using the standard Docker Swarm service scale command:
+    ```bash
+    docker service scale tlvlp-iot_reporting-service=2
+    ```
+
+Here is a summary on the scalability of each service:
+
+| Service | Scalable |
+| :--- | :--- |
+| [iot-api-gateway](https://github.com/tlvlp/iot-api-gateway) | Yes |
+| [iot-portal](https://github.com/tlvlp/iot-portal) | Yes | 
+| [iot-mqtt-client](https://github.com/tlvlp/iot-mqtt-client) | Yes, but the current MQTT broker does not support load balancing between clients | 
+| [iot-unit-service](https://github.com/tlvlp/iot-unit-service) | Yes |
+| [iot-reporting-service](https://github.com/tlvlp/iot-reporting-service) | Yes |
+| [iot-scheduler-service](https://github.com/tlvlp/iot-scheduler-service) | No |
+
 
 ## Deployment scripts
 >**Notes:**
