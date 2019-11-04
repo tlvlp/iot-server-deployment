@@ -189,11 +189,11 @@ export API_GATEWAY_API_UNIT_MODULE_CONTROL=/units/modules/control
 export API_GATEWAY_API_ADD_SCHEDULED_EVENT_TO_UNIT=/units/events/add
 export API_GATEWAY_API_DELETE_SCHEDULED_EVENT_FROM_UNIT=/units/events/delete
 export API_GATEWAY_API_GET_REPORTS_FOR_UNIT_MODULE=/units/modules/report
-export API_GATEWAY_API_AUTHENTICATE_USER=/admin/users/authenticate
-export API_GATEWAY_API_GET_ALL_USERS=/admin/users/all
-export API_GATEWAY_API_SAVE_USER=/admin/users/save
-export API_GATEWAY_API_DELETE_USER=/admin/users/delete
-export API_GATEWAY_API_GET_ROLES=/admin/roles
+export API_GATEWAY_API_GET_ALL_USERS=/users/admin/users/all
+export API_GATEWAY_API_SAVE_USER=/users/admin/users/save
+export API_GATEWAY_API_DELETE_USER=/users/admin/users/delete
+export API_GATEWAY_API_GET_ROLES=/users/admin/roles
+export API_GATEWAY_API_AUTHENTICATE_USER=/users/auth
 
 #############################
 # Portal
