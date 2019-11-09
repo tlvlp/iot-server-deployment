@@ -292,42 +292,45 @@ services:
       - REPORTING_SERVICE_API_GET_AVERAGES
       - REPORTING_SERVICE_API_POST_VALUES
 
-#  ${PORTAL_NAME}:
-#    image: ${PORTAL_IMAGE}
-#    depends_on:
-#      - ${API_GATEWAY_NAME}
-#    networks:
-#      - portal-net
-#    volumes:
-#      - /etc/localtime:/etc/localtime:ro
-#      - /etc/timezone:/etc/timezone:ro
-#    ports:
-#      - ${PORTAL_PORT}:${PORTAL_PORT}
-#    deploy:
-#      replicas: ${PORTAL_NUMBER_OF_REPLICAS}
-#      restart_policy:
-#        condition: any
-#    environment:
-#      - SPRING_ACTIVE_PROFILE
-#      - SPRING_LOG_PATTERN
-#      - SPRING_LOG_LEVEL
-#      - PORTAL_PORT
-#      - PORTAL_NAME
-#      # API Gateway
-#      - API_GATEWAY_NAME
-#      - API_GATEWAY_PORT_TLS
-#      - API_GATEWAY_API_GET_ALL_UNITS
-#      - API_GATEWAY_API_GET_UNIT_BY_ID_WITH_SCHEDULES_AND_LOGS
-#      - API_GATEWAY_API_REQUEST_GLOBAL_UNIT_STATUS
-#      - API_GATEWAY_API_UNIT_MODULE_CONTROL
-#      - API_GATEWAY_API_ADD_SCHEDULED_EVENT_TO_UNIT
-#      - API_GATEWAY_API_DELETE_SCHEDULED_EVENT_FROM_UNIT
-#      - API_GATEWAY_API_GET_REPORTS_FOR_UNIT_MODULE
-#      - API_GATEWAY_API_AUTHENTICATE_USER
-#      - API_GATEWAY_API_GET_ALL_USERS
-#      - API_GATEWAY_API_SAVE_USER
-#      - API_GATEWAY_API_DELETE_USER
-#      - API_GATEWAY_API_GET_ROLES
+  ${PORTAL_NAME}:
+    image: ${PORTAL_IMAGE}
+    depends_on:
+      - ${API_GATEWAY_NAME}
+    networks:
+      - portal-net
+    volumes:
+      - ${TLS_LETSENCRYPT_PARENT_LOCATION}:/tls:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    ports:
+      - ${PORTAL_PORT}:${PORTAL_PORT}
+    secrets:
+      - ${TLS_KEYSTORE_PASSWORD_SECRET_FILE}
+    deploy:
+      replicas: ${PORTAL_NUMBER_OF_REPLICAS}
+      restart_policy:
+        condition: any
+    environment:
+      - SPRING_ACTIVE_PROFILE
+      - SPRING_LOG_PATTERN
+      - SPRING_LOG_LEVEL
+      - PORTAL_PORT
+      - PORTAL_NAME
+      # API Gateway
+      - API_GATEWAY_NAME
+      - API_GATEWAY_PORT_TLS
+      - API_GATEWAY_API_GET_ALL_UNITS
+      - API_GATEWAY_API_GET_UNIT_BY_ID_WITH_SCHEDULES_AND_LOGS
+      - API_GATEWAY_API_REQUEST_GLOBAL_UNIT_STATUS
+      - API_GATEWAY_API_UNIT_MODULE_CONTROL
+      - API_GATEWAY_API_ADD_SCHEDULED_EVENT_TO_UNIT
+      - API_GATEWAY_API_DELETE_SCHEDULED_EVENT_FROM_UNIT
+      - API_GATEWAY_API_GET_REPORTS_FOR_UNIT_MODULE
+      - API_GATEWAY_API_AUTHENTICATE_USER
+      - API_GATEWAY_API_GET_ALL_USERS
+      - API_GATEWAY_API_SAVE_USER
+      - API_GATEWAY_API_DELETE_USER
+      - API_GATEWAY_API_GET_ROLES
 
 
 volumes:
