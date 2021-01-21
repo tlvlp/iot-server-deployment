@@ -1,5 +1,8 @@
 # IoT Server Deployment
 
+## LEGACY REPOSITORY!
+This repository is no longer maintained. See the [project summary page](https://github.com/tlvlp/iot-project-summary) for details and updates.
+
 ## Project
 Part of the [tlvlp IoT project](https://github.com/tlvlp/iot-project-summary)'s server side microservices.
 
